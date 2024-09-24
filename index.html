@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-commerce Store Profit Calculator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 20px;
+            background-color: #f4f4f9;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
+        }
+        h2 {
+            text-align: center;
+            color: #007BFF;
+        }
+        label {
+            display: block;
+            margin: 10px 0 5px;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .button {
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            cursor: pointer;
+            border-radius: 4px;
+            width: 100%;
+        }
+        .button:hover {
+            background-color: #0056b3;
+        }
+        .results {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f1f1f1;
+            border-radius: 5px;
+        }
+        .result-label {
+            font-weight: bold;
+        }
+        .profit-highlight {
+            color: #FF4500;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>E-commerce Store Profit Calculator</h2>
+
+    <label for="setupCost">Store Setup Cost (₹)</label>
+    <input type="number" id="setupCost" placeholder="Enter store setup cost (x)">
+
+    <label for="rentDuration">Rent Duration (in months, multiples of 11)</label>
+    <input type="number" id="rentDuration" value="11" min="11" step="11">
+
+    <label for="profitSharePercentage">Profit Share Percentage (%)</label>
+    <input type="number" id="profitSharePercentage" value="9">
+
+    <label for="profitPaymentFrequency">Profit Share Payment Frequency</label>
+    <select id="profitPaymentFrequency">
+        <option value="single">Single Payment</option>
+        <option value="daily">Daily Payments</option>
+        <option value="weekly">Weekly Payments</option>
+        <option value="monthly">Monthly Payments</option>
+    </select>
+
+    <label for="rentPaymentFrequency">Rent Payment Frequency</label>
+    <select id="rentPaymentFrequency">
+        <option value="daily">Daily Payments</option>
+        <option value="weekly">Weekly Payments</option>
+        <option value="monthly">Monthly Payments</option>
+        <option value="single">Single Payment</option>
+    </select>
+
+    <button class="button" onclick="calculate()">Calculate</button>
+
+    <div class="results" id="results">
+        <p class="result-label profit-highlight">Profit Share (₹): <span id="profitShare"></span></p>
+        <p class="result-label">Rent Breakdown:</p>
+        <p id="rentBreakdown"></p>
+        <p class="result-label profit-highlight">Total Profit Share Payment Breakdown (₹): <span id="profitBreakdown"></span></p>
+        <p class="result-label">Total Rent Earned (₹): <span id="totalRentEarned"></span></p>
+        <p class="result-label">Overall Total Earnings (₹): <span id="totalEarnings"></span></p>
+    </div>
+</div>
+
+<script>
+    function calculate() {
+        const setupCost = parseFloat(document.getElementById('setupCost').value);
+        const rentDuration = parseFloat(document.getElementById('rentDuration').value);
+        const profitSharePercentage = parseFloat(document.getElementById('profitSharePercentage').value);
+        const profitPaymentFrequency = document.getElementById('profitPaymentFrequency').value;
+        const rentPaymentFrequency = document.getElementById('rentPaymentFrequency').value;
+
+        const monthsPerCycle = 11;
+        const daysPerMonth = 30;
+        const initialMonthlyRent = 15000;  // Set the initial rent to ₹15,000 for the first 11 months
+        const renewalIncrease = 5 / 100;   // Rent increases by 5% after each 11 months
+        let totalProfitShare = (profitSharePercentage / 100) * setupCost * rentDuration;
+        let totalRent = 0;
+        let rentBreakdown = '';
+        let currentMonthlyRent = initialMonthlyRent;
+
+        // Calculate rent in 11-month cycles, adjust based on the selected payment frequency (daily/weekly/monthly)
+        for (let cycle = 1; cycle <= Math.ceil(rentDuration / monthsPerCycle); cycle++) {
+            let rentForCycle = currentMonthlyRent * monthsPerCycle;
+            totalRent += rentForCycle;
+
+            if (rentPaymentFrequency === 'daily') {
+                let dailyRent = (currentMonthlyRent / daysPerMonth).toFixed(2);
+                rentBreakdown += `Cycle ${cycle} (11 months): ₹${dailyRent} per day for ${daysPerMonth * monthsPerCycle} days<br>`;
+            } else if (rentPaymentFrequency === 'weekly') {
+                let weeklyRent = ((currentMonthlyRent * monthsPerCycle) / (daysPerMonth * monthsPerCycle / 7)).toFixed(2);
+                rentBreakdown += `Cycle ${cycle} (11 months): ₹${weeklyRent} per week<br>`;
+            } else if (rentPaymentFrequency === 'monthly') {
+                rentBreakdown += `Cycle ${cycle} (11 months): ₹${currentMonthlyRent.toFixed(2)} per month<br>`;
+            }
+
+            currentMonthlyRent += currentMonthlyRent * renewalIncrease;
+        }
+
+        // Profit share payment breakdown
+        let profitBreakdown = '';
+        if (profitPaymentFrequency === 'single') {
+            profitBreakdown = `One-time payment of ₹${totalProfitShare.toFixed(2)}`;
+        } else if (profitPaymentFrequency === 'daily') {
+            const dailyProfitShare = totalProfitShare / (rentDuration * daysPerMonth);
+            profitBreakdown = `Daily payment of ₹${dailyProfitShare.toFixed(2)} for ${rentDuration * daysPerMonth} days`;
+        } else if (profitPaymentFrequency === 'weekly') {
+            const weeklyProfitShare = totalProfitShare / (rentDuration / (11 / 4.3));  // Approximate weeks per 11 months
+            profitBreakdown = `Weekly payment of ₹${weeklyProfitShare.toFixed(2)} for ${Math.ceil(rentDuration / (11 / 4.3))} weeks`;
+        } else if (profitPaymentFrequency === 'monthly') {
+            const monthlyProfitShare = totalProfitShare / rentDuration;
+            profitBreakdown = `Monthly payment of ₹${monthlyProfitShare.toFixed(2)} for ${rentDuration} months`;
+        }
+
+        // Overall total earnings (Profit share + Rent)
+        const totalEarnings = totalRent + totalProfitShare;
+
+        // Display results
+        document.getElementById('profitShare').textContent = totalProfitShare.toFixed(2);
+        document.getElementById('rentBreakdown').innerHTML = rentBreakdown;
+        document.getElementById('profitBreakdown').textContent = profitBreakdown;
+        document.getElementById('totalRentEarned').textContent = totalRent.toFixed(2);
+        document.getElementById('totalEarnings').textContent = totalEarnings.toFixed(2);
+    }
+</script>
+
+</body>
+</html>
